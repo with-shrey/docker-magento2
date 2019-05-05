@@ -1,0 +1,50 @@
+# https://docs.docker.com/compose/compose-file
+version: "3.6"
+
+# https://docs.docker.com/compose/compose-file/#service-configuration-reference
+services:
+  nginx:
+    build:
+      context: ./nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./src:/usr/share/nginx/html
+    environment:
+      MAGE_ROOT: /usr/share/nginx/html
+    depends_on:
+      - fpm
+    links:
+      - fpm
+  #custom name
+
+  fpm:
+    build:
+      context: ./php
+    restart: always
+    volumes:
+      - ./src:/usr/share/nginx/html
+      - ./nginx/xdebug.ini:/etc/php/7.1/mods-available/xdebug.ini
+    depends_on:
+      - db
+  db:
+    image: mysql:5.7
+    restart: always
+    volumes:
+      - ./db/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+    - "8080:80"
+    environment:
+      MYSQL_USERNAME: ${MYSQL_ROOT_USERNAME}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - db
